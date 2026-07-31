@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BetterMe Private Club — Event Registration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@0;1&display=swap"
+  rel="stylesheet"
+/>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="card">
+    <img class="logo" src="assets/logo.png" alt="BetterMe Private Club" />
+    <p class="eyebrow">Member Pass</p>
+    <p class="event-meta">15 August 2026, 13:00 · Mayachok, Kyiv</p>
+    <p class="subtitle">Start typing your name and select yourself from the list.</p>
+
+    <form id="registration-form" autocomplete="off">
+      <div class="field">
+        <label for="name-input">Full name</label>
+        <div class="autocomplete">
+          <input
+            type="text"
+            id="name-input"
+            placeholder="Start typing your first or last name..."
+            autocomplete="off"
+            required
+          />
+          <ul id="suggestions" class="suggestions" hidden></ul>
+        </div>
+      </div>
+
+      <button type="submit" id="submit-btn" disabled>Register</button>
+    </form>
+
+    <p id="status" class="status" role="status"></p>
+  </main>
+
+  <script src="data/names.js"></script>
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

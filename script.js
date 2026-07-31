@@ -1,0 +1,159 @@
+(function () {
+  const input = document.getElementById("name-input");
+  const suggestionsList = document.getElementById("suggestions");
+  const submitBtn = document.getElementById("submit-btn");
+  const status = document.getElementById("status");
+  const form = document.getElementById("registration-form");
+
+  const MAX_SUGGESTIONS = 8;
+  let activeIndex = -1;
+  let currentMatches = [];
+  let selectedName = null;
+
+  function normalize(str) {
+    return str.toLowerCase();
+  }
+
+  function getMatches(query) {
+    const q = normalize(query.trim());
+    if (!q) return [];
+    return CLUB_MEMBERS.filter((name) => normalize(name).includes(q)).slice(
+      0,
+      MAX_SUGGESTIONS
+    );
+  }
+
+  function renderSuggestions(matches) {
+    currentMatches = matches;
+    activeIndex = -1;
+    suggestionsList.innerHTML = "";
+
+    if (matches.length === 0) {
+      const li = document.createElement("li");
+      li.className = "empty";
+      li.textContent = "No matches found";
+      suggestionsList.appendChild(li);
+      suggestionsList.hidden = false;
+      return;
+    }
+
+    matches.forEach((name, i) => {
+      const li = document.createElement("li");
+      li.textContent = name;
+      li.dataset.index = String(i);
+      li.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        selectName(name);
+      });
+      suggestionsList.appendChild(li);
+    });
+    suggestionsList.hidden = false;
+  }
+
+  function hideSuggestions() {
+    suggestionsList.hidden = true;
+    suggestionsList.innerHTML = "";
+    activeIndex = -1;
+  }
+
+  function selectName(name) {
+    selectedName = name;
+    input.value = name;
+    hideSuggestions();
+    submitBtn.disabled = false;
+  }
+
+  function updateActive(newIndex) {
+    const items = suggestionsList.querySelectorAll("li:not(.empty)");
+    items.forEach((el) => el.classList.remove("active"));
+    if (newIndex >= 0 && newIndex < items.length) {
+      items[newIndex].classList.add("active");
+      items[newIndex].scrollIntoView({ block: "nearest" });
+    }
+    activeIndex = newIndex;
+  }
+
+  input.addEventListener("input", () => {
+    selectedName = null;
+    submitBtn.disabled = true;
+    status.textContent = "";
+    status.className = "status";
+    const matches = getMatches(input.value);
+    if (input.value.trim().length === 0) {
+      hideSuggestions();
+      return;
+    }
+    renderSuggestions(matches);
+  });
+
+  input.addEventListener("keydown", (e) => {
+    const items = suggestionsList.querySelectorAll("li:not(.empty)");
+    if (suggestionsList.hidden || items.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      updateActive(Math.min(activeIndex + 1, items.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      updateActive(Math.max(activeIndex - 1, 0));
+    } else if (e.key === "Enter") {
+      if (activeIndex >= 0 && currentMatches[activeIndex]) {
+        e.preventDefault();
+        selectName(currentMatches[activeIndex]);
+      }
+    } else if (e.key === "Escape") {
+      hideSuggestions();
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".autocomplete")) {
+      hideSuggestions();
+    }
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!selectedName) {
+      status.textContent = "Please select a name from the list.";
+      status.className = "status error";
+      return;
+    }
+
+    if (
+      !GOOGLE_SCRIPT_URL ||
+      GOOGLE_SCRIPT_URL === "PASTE_YOUR_WEB_APP_URL_HERE"
+    ) {
+      status.textContent =
+        "Setup error: response destination is not configured (config.js).";
+      status.className = "status error";
+      return;
+    }
+
+    submitBtn.disabled = true;
+    status.textContent = "Saving...";
+    status.className = "status";
+
+    try {
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ name: selectedName }),
+      });
+      const data = await response.json();
+
+      if (data.result === "success") {
+        status.textContent = `Thank you, ${selectedName}! You're registered.`;
+        status.className = "status success";
+        form.reset();
+        selectedName = null;
+      } else {
+        throw new Error(data.error || "Unknown error");
+      }
+    } catch (err) {
+      status.textContent = "Could not save your registration. Please try again.";
+      status.className = "status error";
+      submitBtn.disabled = false;
+    }
+  });
+})();
