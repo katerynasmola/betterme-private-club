@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>BetterMe Private Club — Event Registration</title>
+<title>BetterMe Private Club — Member Check-In</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
@@ -15,9 +15,8 @@
 <body>
   <main class="card">
     <img class="logo" src="assets/logo.png" alt="BetterMe Private Club" />
-    <p class="eyebrow">Member Pass</p>
-    <p class="event-meta">15 August 2026, 13:00 · Mayachok, Kyiv</p>
-    <p class="subtitle">Start typing your name and select yourself from the list.</p>
+    <h1 class="welcome">Welcome to the BetterMe Private Club</h1>
+    <p class="subtitle">Your exclusive experience begins here. Please select your name to complete your member check-in.</p>
 
     <form id="registration-form" autocomplete="off">
       <div class="field">
@@ -26,7 +25,7 @@
           <input
             type="text"
             id="name-input"
-            placeholder="Start typing your first or last name..."
+            placeholder="Start typing your first or last name…"
             autocomplete="off"
             required
           />
@@ -34,7 +33,7 @@
         </div>
       </div>
 
-      <button type="submit" id="submit-btn" disabled>Register</button>
+      <button type="submit" id="submit-btn" disabled>Check In</button>
     </form>
 
     <p id="status" class="status" role="status"></p>

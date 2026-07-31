@@ -143,7 +143,7 @@
       const data = await response.json();
 
       if (data.result === "success") {
-        status.textContent = `Thank you, ${selectedName}! You're registered.`;
+        status.textContent = `Thank you, ${selectedName}! You're checked in.`;
         status.className = "status success";
         form.reset();
         selectedName = null;
@@ -151,7 +151,7 @@
         throw new Error(data.error || "Unknown error");
       }
     } catch (err) {
-      status.textContent = "Could not save your registration. Please try again.";
+      status.textContent = "Could not save your check-in. Please try again.";
       status.className = "status error";
       submitBtn.disabled = false;
     }
