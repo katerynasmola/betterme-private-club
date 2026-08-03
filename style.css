@@ -46,20 +46,19 @@ body {
 
 .welcome {
   font-family: "Playfair Display", Georgia, serif;
-  font-style: normal;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  font-size: clamp(0.85rem, calc(3.91vw - 4.38px), 1.4rem);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(0.85rem, calc(5.86vw - 6.57px), 1.9rem);
   white-space: nowrap;
   margin: 0 0 12px;
 }
 
-/* Вузькі телефони — дозволяємо перенос замість крихітного шрифту в один рядок. */
-@media (max-width: 480px) {
+/* Дуже вузькі екрани (рідкісні старі телефони) — дозволяємо перенос,
+   аби заголовок не виходив за межі картки. */
+@media (max-width: 360px) {
   .welcome {
     white-space: normal;
-    font-size: 1.15rem;
+    font-size: 1rem;
   }
 }
 
@@ -79,7 +78,11 @@ body {
    та альбомній орієнтації — ширші поля, крупніший текст під дотик. */
 @media (min-width: 700px) {
   .card {
-    max-width: 900px;
+    max-width: 1040px;
+    min-height: clamp(480px, 70vh, 800px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     padding: 48px;
     border-radius: 20px;
   }
@@ -90,7 +93,7 @@ body {
   }
 
   .welcome {
-    font-size: clamp(1.3rem, calc(3.91vw - 5.63px), 1.9rem);
+    font-size: clamp(2rem, calc(5.86vw - 8.44px), 2.3rem);
   }
 
   .subtitle {
