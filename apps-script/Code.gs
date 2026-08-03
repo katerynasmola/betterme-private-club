@@ -1,5 +1,6 @@
-// Paste this code into Extensions > Apps Script of your Google Sheet.
-// See README.md for the full setup steps.
+// Paste Code.gs, Index.html, Stylesheet.html and JavaScript.html into
+// Extensions > Apps Script of your Google Sheet (one Apps Script "file"
+// each — matching names/types). See README.md for full setup steps.
 
 // Must match the tab name exactly. If you rename the tab, update this too.
 var NAMES_SHEET_NAME = "Private Club Kyiv | Registration (landing)";
@@ -14,50 +15,64 @@ var EVENT_COLUMNS = {
   warsaw: { status: 4, timestamp: 5 },
 };
 
+var EVENT_META = {
+  kyiv: "15 August 2026 · Mayachok, Kyiv",
+  warsaw: "29 August 2026 · Warsaw",
+};
+
 function doGet(e) {
-  try {
-    var sheet = getNamesSheet();
-    var names = readNames(sheet);
-    return jsonResponse({ result: "success", names: names });
-  } catch (err) {
-    return jsonResponse({ result: "error", error: err.message });
-  }
+  var eventId = ((e.parameter && e.parameter.event) || "").toString().trim().toLowerCase();
+  var template = HtmlService.createTemplateFromFile("Index");
+  template.eventId = eventId;
+  template.eventMeta = EVENT_META[eventId] || "";
+  return template
+    .evaluate()
+    .setTitle("BetterMe Private Club — Check-In")
+    .addMetaTag("viewport", "width=device-width, initial-scale=1.0")
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function doPost(e) {
-  try {
-    var data = JSON.parse(e.postData.contents);
-    var name = (data.name || "").toString().trim();
-    var eventId = (data.event || "").toString().trim().toLowerCase();
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
 
-    if (!name) {
-      return jsonResponse({ result: "error", error: "Empty name" });
-    }
+// Called from the client via google.script.run — returns the list of names
+// straight from column A of the names tab.
+function getNames() {
+  var sheet = getNamesSheet();
+  return readNames(sheet);
+}
 
-    var columns = EVENT_COLUMNS[eventId];
-    if (!columns) {
-      return jsonResponse({ result: "error", error: "Unknown or missing event" });
-    }
+// Called from the client via google.script.run when someone checks in.
+function checkIn(name, eventId) {
+  name = (name || "").toString().trim();
+  eventId = (eventId || "").toString().trim().toLowerCase();
 
-    var sheet = getNamesSheet();
-    var rowIndex = findRowByName(sheet, name);
-
-    if (rowIndex === -1) {
-      return jsonResponse({ result: "error", error: "Name not found in the list" });
-    }
-
-    var statusCell = sheet.getRange(rowIndex, columns.status);
-    var alreadyCheckedIn = statusCell.getValue().toString().trim() !== "";
-
-    statusCell.setValue("Checked In");
-    sheet.getRange(rowIndex, columns.timestamp).setValue(new Date());
-
-    logResponse(name, eventId);
-
-    return jsonResponse({ result: "success", alreadyCheckedIn: alreadyCheckedIn });
-  } catch (err) {
-    return jsonResponse({ result: "error", error: err.message });
+  if (!name) {
+    throw new Error("Empty name");
   }
+
+  var columns = EVENT_COLUMNS[eventId];
+  if (!columns) {
+    throw new Error("Unknown or missing event");
+  }
+
+  var sheet = getNamesSheet();
+  var rowIndex = findRowByName(sheet, name);
+
+  if (rowIndex === -1) {
+    throw new Error("Name not found in the list");
+  }
+
+  var statusCell = sheet.getRange(rowIndex, columns.status);
+  var alreadyCheckedIn = statusCell.getValue().toString().trim() !== "";
+
+  statusCell.setValue("Checked In");
+  sheet.getRange(rowIndex, columns.timestamp).setValue(new Date());
+
+  logResponse(name, eventId);
+
+  return { alreadyCheckedIn: alreadyCheckedIn };
 }
 
 function getNamesSheet() {
@@ -102,10 +117,4 @@ function logResponse(name, eventId) {
     sheet.appendRow(["Timestamp", "Name", "Event"]);
   }
   sheet.appendRow([new Date(), name, eventId]);
-}
-
-function jsonResponse(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(
-    ContentService.MimeType.JSON
-  );
 }
