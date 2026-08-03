@@ -44,6 +44,14 @@ body {
   display: block;
 }
 
+.event-meta {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .welcome {
   font-family: "Playfair Display", Georgia, serif;
   font-style: italic;
@@ -90,6 +98,10 @@ body {
   .logo {
     height: 52px;
     margin-bottom: 20px;
+  }
+
+  .event-meta {
+    font-size: 0.9rem;
   }
 
   .welcome {

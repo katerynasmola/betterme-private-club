@@ -5,10 +5,13 @@
   const status = document.getElementById("status");
   const form = document.getElementById("registration-form");
 
+  const EVENT_ID = document.body.dataset.event;
   const MAX_SUGGESTIONS = 8;
   let activeIndex = -1;
   let currentMatches = [];
   let selectedName = null;
+  let members = [];
+  let membersLoaded = false;
 
   function normalize(str) {
     return str.toLowerCase();
@@ -17,7 +20,7 @@
   function getMatches(query) {
     const q = normalize(query.trim());
     if (!q) return [];
-    return CLUB_MEMBERS.filter((name) => normalize(name).includes(q)).slice(
+    return members.filter((name) => normalize(name).includes(q)).slice(
       0,
       MAX_SUGGESTIONS
     );
@@ -114,6 +117,13 @@
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    if (!membersLoaded) {
+      status.textContent = "Member list is still loading. Please wait.";
+      status.className = "status error";
+      return;
+    }
+
     if (!selectedName) {
       status.textContent = "Please select a name from the list.";
       status.className = "status error";
@@ -130,6 +140,12 @@
       return;
     }
 
+    if (!EVENT_ID) {
+      status.textContent = "Setup error: this page is missing its event id.";
+      status.className = "status error";
+      return;
+    }
+
     submitBtn.disabled = true;
     status.textContent = "Saving...";
     status.className = "status";
@@ -138,12 +154,14 @@
       const response = await fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ name: selectedName }),
+        body: JSON.stringify({ name: selectedName, event: EVENT_ID }),
       });
       const data = await response.json();
 
       if (data.result === "success") {
-        status.textContent = `Thank you, ${selectedName}! You're checked in.`;
+        status.textContent = data.alreadyCheckedIn
+          ? `${selectedName} was already checked in — check-in time updated.`
+          : `Thank you, ${selectedName}! You're checked in.`;
         status.className = "status success";
         form.reset();
         selectedName = null;
@@ -156,4 +174,42 @@
       submitBtn.disabled = false;
     }
   });
+
+  async function loadMembers() {
+    input.disabled = true;
+    input.placeholder = "Loading members…";
+    status.textContent = "";
+    status.className = "status";
+
+    if (
+      !GOOGLE_SCRIPT_URL ||
+      GOOGLE_SCRIPT_URL === "PASTE_YOUR_WEB_APP_URL_HERE"
+    ) {
+      input.placeholder = "Setup error: member list is not configured.";
+      status.textContent =
+        "Setup error: member list source is not configured (config.js).";
+      status.className = "status error";
+      return;
+    }
+
+    try {
+      const response = await fetch(GOOGLE_SCRIPT_URL, { method: "GET" });
+      const data = await response.json();
+
+      if (data.result !== "success" || !Array.isArray(data.names)) {
+        throw new Error(data.error || "Unknown error");
+      }
+
+      members = data.names;
+      membersLoaded = true;
+      input.disabled = false;
+      input.placeholder = "Start typing your first or last name…";
+    } catch (err) {
+      input.placeholder = "Could not load member list.";
+      status.textContent = "Could not load the member list. Please reload the page.";
+      status.className = "status error";
+    }
+  }
+
+  loadMembers();
 })();
