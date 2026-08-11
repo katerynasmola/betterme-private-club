@@ -7,12 +7,14 @@ var NAMES_SHEET_NAME = "Private Club Kyiv | Registration (landing)";
 var RESPONSES_SHEET_NAME = "Responses";
 
 // Column layout on the names tab:
-// A = Full name (already there)
-// B = Kyiv Check-in status   C = Kyiv Check-in timestamp
-// D = Warsaw Check-in status E = Warsaw Check-in timestamp
+// A = Ukrainian name   B = English name (used for check-in search/match)
+// C = Email
+// D = Kyiv Check-in status    E = Kyiv Check-in timestamp
+// F = Warsaw Check-in status  G = Warsaw Check-in timestamp
+var NAME_COLUMN = 2;
 var EVENT_COLUMNS = {
-  kyiv: { status: 2, timestamp: 3 },
-  warsaw: { status: 4, timestamp: 5 },
+  kyiv: { status: 4, timestamp: 5 },
+  warsaw: { status: 6, timestamp: 7 },
 };
 
 var EVENT_META = {
@@ -37,7 +39,7 @@ function include(filename) {
 }
 
 // Called from the client via google.script.run — returns the list of names
-// straight from column A of the names tab.
+// straight from the names tab.
 function getNames() {
   var sheet = getNamesSheet();
   return readNames(sheet);
@@ -87,7 +89,7 @@ function readNames(sheet) {
   var lastRow = sheet.getLastRow();
   if (lastRow === 0) return [];
 
-  var values = sheet.getRange(1, 1, lastRow, 1).getValues();
+  var values = sheet.getRange(1, NAME_COLUMN, lastRow, 1).getValues();
   var names = [];
   for (var i = 0; i < values.length; i++) {
     var name = (values[i][0] || "").toString().trim();
@@ -100,7 +102,7 @@ function findRowByName(sheet, name) {
   var lastRow = sheet.getLastRow();
   if (lastRow === 0) return -1;
 
-  var values = sheet.getRange(1, 1, lastRow, 1).getValues();
+  var values = sheet.getRange(1, NAME_COLUMN, lastRow, 1).getValues();
   var target = name.toLowerCase();
   for (var i = 0; i < values.length; i++) {
     var candidate = (values[i][0] || "").toString().trim().toLowerCase();
