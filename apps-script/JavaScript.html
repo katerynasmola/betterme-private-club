@@ -22,14 +22,20 @@
     return person.uk ? `${person.uk} / ${person.en}` : person.en;
   }
 
+  // Matches word-by-word rather than as one exact substring, since the
+  // Ukrainian column stores "Прізвище Ім'я" (surname first) — typing
+  // "Ім'я Прізвище" in the more familiar order should still find it.
+  function fieldMatches(field, tokens) {
+    if (!field) return false;
+    const normalized = normalize(field);
+    return tokens.every((token) => normalized.includes(token));
+  }
+
   function getMatches(query) {
-    const q = normalize(query.trim());
-    if (!q) return [];
+    const tokens = normalize(query.trim()).split(/\s+/).filter(Boolean);
+    if (!tokens.length) return [];
     return members
-      .filter(
-        (person) =>
-          normalize(person.en).includes(q) || (person.uk && normalize(person.uk).includes(q))
-      )
+      .filter((person) => fieldMatches(person.en, tokens) || fieldMatches(person.uk, tokens))
       .slice(0, MAX_SUGGESTIONS);
   }
 
