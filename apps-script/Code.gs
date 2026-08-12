@@ -7,10 +7,12 @@ var NAMES_SHEET_NAME = "Private Club Kyiv | Registration (landing)";
 var RESPONSES_SHEET_NAME = "Responses";
 
 // Column layout on the names tab:
-// A = Ukrainian name   B = English name (used for check-in search/match)
+// A = Ukrainian name (shown in the dropdown, searchable)
+// B = English name (used for check-in search/match, shown in the dropdown)
 // C = Email
 // D = Kyiv Check-in status    E = Kyiv Check-in timestamp
 // F = Warsaw Check-in status  G = Warsaw Check-in timestamp
+var UK_NAME_COLUMN = 1;
 var NAME_COLUMN = 2;
 var EVENT_COLUMNS = {
   kyiv: { status: 4, timestamp: 5 },
@@ -38,8 +40,9 @@ function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
-// Called from the client via google.script.run — returns the list of names
-// straight from the names tab.
+// Called from the client via google.script.run — returns {uk, en} pairs for
+// every row so the client can search/display both languages. `en` is the
+// value later sent back to checkIn() and must stay unique (see NAME_COLUMN).
 function getNames() {
   var sheet = getNamesSheet();
   return readNames(sheet);
@@ -89,13 +92,19 @@ function readNames(sheet) {
   var lastRow = sheet.getLastRow();
   if (lastRow === 0) return [];
 
-  var values = sheet.getRange(1, NAME_COLUMN, lastRow, 1).getValues();
-  var names = [];
+  var startCol = Math.min(UK_NAME_COLUMN, NAME_COLUMN);
+  var width = Math.abs(NAME_COLUMN - UK_NAME_COLUMN) + 1;
+  var values = sheet.getRange(1, startCol, lastRow, width).getValues();
+  var ukOffset = UK_NAME_COLUMN - startCol;
+  var enOffset = NAME_COLUMN - startCol;
+
+  var people = [];
   for (var i = 0; i < values.length; i++) {
-    var name = (values[i][0] || "").toString().trim();
-    if (name) names.push(name);
+    var uk = (values[i][ukOffset] || "").toString().trim();
+    var en = (values[i][enOffset] || "").toString().trim();
+    if (en) people.push({ uk: uk, en: en });
   }
-  return names;
+  return people;
 }
 
 function findRowByName(sheet, name) {

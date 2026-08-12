@@ -18,13 +18,19 @@
     return str.toLowerCase();
   }
 
+  function displayLabel(person) {
+    return person.uk ? `${person.uk} / ${person.en}` : person.en;
+  }
+
   function getMatches(query) {
     const q = normalize(query.trim());
     if (!q) return [];
-    return members.filter((name) => normalize(name).includes(q)).slice(
-      0,
-      MAX_SUGGESTIONS
-    );
+    return members
+      .filter(
+        (person) =>
+          normalize(person.en).includes(q) || (person.uk && normalize(person.uk).includes(q))
+      )
+      .slice(0, MAX_SUGGESTIONS);
   }
 
   function renderSuggestions(matches) {
@@ -41,13 +47,13 @@
       return;
     }
 
-    matches.forEach((name, i) => {
+    matches.forEach((person, i) => {
       const li = document.createElement("li");
-      li.textContent = name;
+      li.textContent = displayLabel(person);
       li.dataset.index = String(i);
       li.addEventListener("mousedown", (e) => {
         e.preventDefault();
-        selectName(name);
+        selectPerson(person);
       });
       suggestionsList.appendChild(li);
     });
@@ -60,9 +66,9 @@
     activeIndex = -1;
   }
 
-  function selectName(name) {
-    selectedName = name;
-    input.value = name;
+  function selectPerson(person) {
+    selectedName = person.en;
+    input.value = displayLabel(person);
     hideSuggestions();
     submitBtn.disabled = false;
   }
@@ -103,7 +109,7 @@
     } else if (e.key === "Enter") {
       if (activeIndex >= 0 && currentMatches[activeIndex]) {
         e.preventDefault();
-        selectName(currentMatches[activeIndex]);
+        selectPerson(currentMatches[activeIndex]);
       }
     } else if (e.key === "Escape") {
       hideSuggestions();
@@ -165,8 +171,8 @@
     status.className = "status";
 
     google.script.run
-      .withSuccessHandler(function (names) {
-        members = names || [];
+      .withSuccessHandler(function (people) {
+        members = people || [];
         membersLoaded = true;
         input.disabled = false;
         input.placeholder = "Start typing your first or last name…";
